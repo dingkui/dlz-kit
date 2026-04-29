@@ -1,7 +1,7 @@
-# Cursor AI Rules for dlz.comm (JSONMap)
+# Cursor AI Rules for dlz.kit (JSONMap)
 
 ## Project Context
-This is the dlz.comm library, which provides JSONMap - a powerful JSON data manipulation tool for Java.
+This is the dlz.kit library, which provides JSONMap - a powerful JSON data manipulation tool for Java.
 
 ## Core Concepts
 

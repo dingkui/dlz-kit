@@ -4,18 +4,18 @@
     <parent>
         <groupId>top.dlzio</groupId>
         <artifactId>dlz.parent</artifactId>
-        <version>6.6.3</version>
+        <version>6.6.3.1</version>
     </parent>
-    <artifactId>dlz.comm</artifactId>
-    <name>dlz.comm</name>
-    <version>6.6.3</version>
+    <artifactId>dlz-kit</artifactId>
+    <name>dlz-kit</name>
+    <version>6.6.4</version>
     <packaging>jar</packaging>
     <description>像JavaScript一样在Java中“丝滑”操作JSON</description>
-    <url>https://github.com/dingkui/dlz.comm.git</url>
+    <url>https://github.com/dingkui/dlz-kit.git</url>
     <scm>
-        <url>https://github.com/dingkui/dlz.comm</url>
-        <connection>scm:git:https://github.com/dingkui/dlz.comm.git</connection>
-        <developerConnection>scm:git:https://github.com/dingkui/dlz.comm.git</developerConnection>
+        <url>https://github.com/dingkui/dlz-kit</url>
+        <connection>scm:git:https://github.com/dingkui/dlz-kit.git</connection>
+        <developerConnection>scm:git:https://github.com/dingkui/dlz-kit.git</developerConnection>
     </scm>
     <properties>
         <jackson.version>2.13.4.2</jackson.version>
