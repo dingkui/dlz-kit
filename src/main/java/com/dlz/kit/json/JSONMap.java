@@ -180,7 +180,7 @@ public class JSONMap extends HashMap<String, Object> implements IUniversalVals {
      * @param json 源JSON数据
      * @return JSONMap实例
      */
-    public static JSONMap createJsonMap(Object json) {
+    public static JSONMap make(Object json) {
         return new JSONMap(json);
     }
     /**
@@ -189,7 +189,7 @@ public class JSONMap extends HashMap<String, Object> implements IUniversalVals {
      * @param json 源JSON数据
      * @return JSONMap实例
      */
-    public static JSONMap createWithJson(String json) {
+    public static JSONMap read(String json) {
         return JacksonUtil.read(json,JSONMap.class);
     }
 

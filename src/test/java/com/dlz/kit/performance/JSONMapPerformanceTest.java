@@ -117,8 +117,8 @@ public class JSONMapPerformanceTest {
                 throw new RuntimeException(e);
             }
         },JSONMapPerformanceTest::readTraditionalWay);
-        long time2 = test_Read(iterations,multiThread,()-> JSONMap.createWithJson(JSON_DATA),JSONMapPerformanceTest::readJSONMapDirectPath);
-        long time3 = test_Read(iterations,multiThread,()-> JSONMap.createWithJson(JSON_DATA),JSONMapPerformanceTest::readJSONMapSubObject);
+        long time2 = test_Read(iterations,multiThread,()-> JSONMap.read(JSON_DATA),JSONMapPerformanceTest::readJSONMapDirectPath);
+        long time3 = test_Read(iterations,multiThread,()-> JSONMap.read(JSON_DATA),JSONMapPerformanceTest::readJSONMapSubObject);
         printTableRow(iterations, time1, time2, time3);
     }
 
@@ -177,8 +177,8 @@ public class JSONMapPerformanceTest {
                 throw new RuntimeException(e);
             }
         },JSONMapPerformanceTest::readTraditionalWay);
-        long time2 = test_ConstructAndRead(iterations,multiThread,()-> JSONMap.createWithJson(JSON_DATA),JSONMapPerformanceTest::readJSONMapDirectPath);
-        long time3 = test_ConstructAndRead(iterations,multiThread,()-> JSONMap.createWithJson(JSON_DATA),JSONMapPerformanceTest::readJSONMapSubObject);
+        long time2 = test_ConstructAndRead(iterations,multiThread,()-> JSONMap.read(JSON_DATA),JSONMapPerformanceTest::readJSONMapDirectPath);
+        long time3 = test_ConstructAndRead(iterations,multiThread,()-> JSONMap.read(JSON_DATA),JSONMapPerformanceTest::readJSONMapSubObject);
         printTableRow(iterations, time1, time2, time3);
     }
     // ==================== 读取方法 ====================

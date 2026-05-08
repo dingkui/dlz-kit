@@ -463,7 +463,7 @@ class JSONMapTest {
             map.put("id", 1);
             map.put("title", "测试标题");
 
-            JSONMap jsonMap = JSONMap.createJsonMap(map);
+            JSONMap jsonMap = JSONMap.make(map);
             assertEquals(Integer.valueOf(1), jsonMap.getInt("id"));
             assertEquals("测试标题", jsonMap.getStr("title"));
         }
