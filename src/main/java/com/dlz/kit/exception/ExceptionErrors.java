@@ -19,8 +19,6 @@ public class ExceptionErrors {
 //        addErrors(1005, "数据转换异常");
         addErrors(2001, "非法访问异常");
         addErrors(3001, "业务异常");
-        addErrors(3002, "代码异常");
-        addErrors(3004, "代码异常");
         addErrors(3003, "校验错误");
         addErrors(4001, "批处理异常");
         addErrors(5002, "参数异常");
