@@ -4,6 +4,7 @@ import com.dlz.kit.fn.DlzFn;
 import com.dlz.kit.util.VAL;
 import com.dlz.test.beans.ChildEntity;
 import com.dlz.test.beans.TestEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -20,6 +21,7 @@ import static org.junit.Assert.*;
  * 
  * @author test
  */
+@Slf4j
 public class FieldReflectionsTest {
     private TestEntity testEntity;
     private ChildEntity childEntity;
@@ -41,10 +43,10 @@ public class FieldReflectionsTest {
         
         // 测试null字段
         try {
-            FieldReflections.getValue(testEntity, (Field) null);
+            FieldReflections.getValue(testEntity, null);
             fail("null字段应该抛出异常");
-        } catch (IllegalArgumentException e) {
-            assertEquals("field is null", e.getMessage());
+        } catch (Exception e) {
+            assertEquals("6001:[field is null]", e.getMessage());
         }
     }
     
@@ -76,7 +78,7 @@ public class FieldReflectionsTest {
         try {
             FieldReflections.getValue(null, "name", false);
             fail("null对象且非忽略模式应该抛出异常");
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             assertTrue("应该抛出IllegalArgumentException", 
                       e.getMessage().contains("Could not getValue"));
         }
@@ -109,7 +111,7 @@ public class FieldReflectionsTest {
 
 
         assertThrows(Exception.class,()->FieldReflections.setValue(testEntity, "nonExistField", "value", false));
-        assertThrows(IllegalArgumentException.class,()->FieldReflections.setValue(null, "name", "value", false));
+        assertThrows(Exception.class,()->FieldReflections.setValue(null, "name", "value", false));
 
         
         // 测试null对象忽略模式
@@ -130,8 +132,8 @@ public class FieldReflectionsTest {
         try {
             FieldReflections.setValue(testEntity, (Field) null, "value");
             fail("null字段应该抛出异常");
-        } catch (IllegalArgumentException e) {
-            assertEquals("field is null", e.getMessage());
+        } catch (Exception e) {
+            assertEquals("3003:[field is null]", e.getMessage());
         }
     }
     
@@ -276,7 +278,6 @@ public class FieldReflectionsTest {
         
         // 测试lambda表达式（应该抛出异常）
         DlzFn<TestEntity, String> lambdaFn = entity -> entity.getName();
-
         assertThrows(NoSuchFieldError.class,()->FieldReflections.getFn(lambdaFn));
 
         // 测试非getter方法引用（应该抛出异常）

@@ -2,6 +2,7 @@ package com.dlz.kit.util.system;
 
 import com.dlz.kit.cache.CacheMap;
 import com.dlz.kit.exception.SystemException;
+import com.dlz.kit.exception.ValidateException;
 import com.dlz.kit.fn.DlzFn;
 import com.dlz.kit.util.ExceptionUtils;
 import com.dlz.kit.util.VAL;
@@ -25,7 +26,7 @@ public class FieldReflections {
      */
     public static <T> T getValue(final Object obj, final Field field) {
         if (field == null) {
-            throw new IllegalArgumentException("field is null");
+            throw new SystemException("field is null");
         }
         makeAccessible(field);
         Object result = null;
@@ -44,7 +45,7 @@ public class FieldReflections {
             if(ignore){
                 return null;
             }
-            throw new IllegalArgumentException("Could not getValue [" + fieldName + "] on target [null]");
+            throw new ValidateException("Could not getValue [" + fieldName + "] on target [null]");
         }
         final Field field = getField(obj, fieldName, ignore);
         if(field==null && ignore){
@@ -61,7 +62,7 @@ public class FieldReflections {
             if(ignore){
                 return false;
             }
-            throw new IllegalArgumentException("Could not setValue [" + fieldName + "] on target [null]");
+            throw new ValidateException("Could not setValue [" + fieldName + "] on target [null]");
         }
         final Field field = getField(obj, fieldName, ignore);
         if(ignore && field==null){
@@ -82,7 +83,7 @@ public class FieldReflections {
      */
     public static boolean setValue(final Object obj, final Field field, final Object value) {
         if (field == null) {
-            throw new IllegalArgumentException("field is null");
+            throw new ValidateException("field is null");
         }
         try {
             Type genericType = field.getGenericType();
@@ -175,7 +176,7 @@ public class FieldReflections {
     }
 
     public static <T> VAL<Class<?>,Field> getFn(DlzFn<T, ?> function) {
-        return fnFieldCache.getAndSet(function, () -> {
+        final VAL<Class<?>, Field> andSet = fnFieldCache.getAndSet(function, () -> {
             String fieldName = null;
             try {
                 // 第1步 获取SerializedLambda
@@ -189,9 +190,9 @@ public class FieldReflections {
                 } else if (implMethodName.startsWith("is") && implMethodName.length() > 2) {
                     fieldName = decapitalize(implMethodName.substring(2));
                 } else if (implMethodName.startsWith("lambda$")) {
-                    throw new IllegalArgumentException("SerializableFunction不能传递lambda表达式,只能使用方法引用");
+                    throw new ValidateException("SerializableFunction不能传递lambda表达式,只能使用方法引用");
                 } else {
-                    throw new IllegalArgumentException(implMethodName + "不是Getter方法引用");
+                    throw new ValidateException(implMethodName + "不是Getter方法引用");
                 }
                 // 第3步 获取的Class是字符串，并且包名是“/”分割，需要替换成“.”，才能获取到对应的Class对象
 //            String declaredClass = serializedLambda.getImplClass().replace("/", ".");
@@ -204,8 +205,12 @@ public class FieldReflections {
             } catch (Exception e) {
                 log.error(ExceptionUtils.getStackTrace(e));
             }
-            throw new NoSuchFieldError(fieldName);
+            throw new SystemException("取得方法名失败：" + fieldName);
         });
+        if(andSet==null){
+            throw new NoSuchFieldError();
+        }
+        return andSet;
     }
     /**
      * 改变private/protected的成员变量为public，尽量不调用实际改动的语句，避免JDK的SecurityManager抱怨。

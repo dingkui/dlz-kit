@@ -279,7 +279,7 @@ public class Reflections {
     public static RuntimeException convertReflectionExceptionToUnchecked(Exception e) {
         if (e instanceof IllegalAccessException || e instanceof IllegalArgumentException
                 || e instanceof NoSuchMethodException) {
-            return new IllegalArgumentException(e);
+            return SystemException.build(e);
         } else if (e instanceof InvocationTargetException) {
             return new RuntimeException(((InvocationTargetException) e).getTargetException());
         } else if (e instanceof RuntimeException) {

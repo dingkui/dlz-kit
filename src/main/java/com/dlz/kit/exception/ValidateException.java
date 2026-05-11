@@ -22,9 +22,6 @@ public class ValidateException extends BaseException {
 	 * 默认错误码
 	 */
 	private static int DEFUALT_ERROR_CODE = 3003;
-    static {
-        ExceptionErrors.addErrors(3003, "校验错误");
-    }
 	/**
 	 * 构造函数，使用指定消息
 	 * 

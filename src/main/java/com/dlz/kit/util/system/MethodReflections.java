@@ -1,6 +1,7 @@
 package com.dlz.kit.util.system;
 
 import com.dlz.kit.cache.CacheMap;
+import com.dlz.kit.exception.SystemException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
@@ -71,7 +72,7 @@ public class MethodReflections {
     public static Object invokeMethod(final Object obj, final String methodName, final Object... args) {
         Method method = getAccessibleMethod(obj.getClass(), methodName, com.dlz.kit.util.system.Reflections.mkParameterTypes(args));
         if (method == null) {
-            throw new IllegalArgumentException("Could not find method [" + methodName + "] on target [" + obj + "]");
+            throw new SystemException("Could not find method [" + methodName + "] on target [" + obj + "]");
         }
         try {
             return method.invoke(obj, args);

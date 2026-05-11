@@ -1,5 +1,6 @@
 package com.dlz.kit.util;
 
+import com.dlz.kit.exception.SystemException;
 import com.dlz.kit.json.JSONList;
 import com.dlz.kit.json.JSONMap;
 import com.dlz.kit.util.system.FieldReflections;
@@ -53,7 +54,7 @@ public class BeanUtil {
                 if (ignore) {
                     return null;
                 }
-                throw new IllegalArgumentException("can't getValue [" + fieldName + "] from [" + obj + "]");
+                throw new SystemException("can't getValue [" + fieldName + "] from [" + obj + "]");
             }
             final int i1 = Integer.parseInt(fieldName);
             if (object instanceof List) {
@@ -80,7 +81,7 @@ public class BeanUtil {
             if (ignore) {
                 return obj;
             }
-            throw new IllegalArgumentException("can't setValue [" + fieldName + "] from [" + obj + "]");
+            throw new SystemException("can't setValue [" + fieldName + "] from [" + obj + "]");
         }
         Object object = obj;
         final int i = fieldName.indexOf(".");
@@ -101,7 +102,7 @@ public class BeanUtil {
                     if (ignore) {
                         return obj;
                     }
-                    throw new IllegalArgumentException("can't setValue [" + fieldName + "] from [" + obj + "]");
+                    throw new SystemException("can't setValue [" + fieldName + "] from [" + obj + "]");
                 }
                 list.set(index, value);
                 return list.toString();
@@ -117,7 +118,7 @@ public class BeanUtil {
                 if (ignore) {
                     return obj;
                 }
-                throw new IllegalArgumentException("can't setValue [" + fieldName + "] from [" + obj + "]");
+                throw new SystemException("can't setValue [" + fieldName + "] from [" + obj + "]");
             }
             final int i1 = Integer.parseInt(fieldName);
             if (object instanceof List) {
@@ -126,7 +127,7 @@ public class BeanUtil {
                     if (ignore) {
                         return obj;
                     }
-                    throw new IllegalArgumentException("can't setValue [" + fieldName + "] from [" + obj + "]");
+                    throw new SystemException("can't setValue [" + fieldName + "] from [" + obj + "]");
                 }
                 list.set(i1, value);
             } else if (object.getClass().isArray()) {
@@ -135,7 +136,7 @@ public class BeanUtil {
                     if (ignore) {
                         return obj;
                     }
-                    throw new IllegalArgumentException("can't setValue [" + fieldName + "] from [" + obj + "]");
+                    throw new SystemException("can't setValue [" + fieldName + "] from [" + obj + "]");
                 }
                 array[i1] = value;
             }
@@ -170,7 +171,7 @@ public class BeanUtil {
      */
     public static <T> T copyAsTarget(Object source, T target, boolean onlySetValue) {
         if (target instanceof CharSequence || target instanceof Map || target instanceof List || target.getClass().isArray()) {
-            throw new IllegalArgumentException("不支持的复制类型：" + target.getClass());
+            throw new SystemException("不支持的复制类型：" + target.getClass());
         }
         FieldReflections.getFields(target.getClass()).parallelStream().forEach(method -> {
             SetValue annotation = method.getAnnotation(SetValue.class);
@@ -197,7 +198,7 @@ public class BeanUtil {
      */
     public static void copyAsSource(Object source, JSONMap target, boolean onlySetValue) {
         if (source instanceof CharSequence || source instanceof Map || source instanceof List || source.getClass().isArray()) {
-            throw new IllegalArgumentException("不支持的复制类型：" + source.getClass());
+            throw new SystemException("不支持的复制类型：" + source.getClass());
         }
         List<Field> fields = FieldReflections.getFields(source.getClass());
         fields.forEach(method ->{

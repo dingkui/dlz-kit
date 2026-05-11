@@ -23,7 +23,7 @@ public class CacheMap<K,V> extends ConcurrentHashMap<K,V>{
             }
             return v;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("CacheMap getAndSet error:{}",e.getMessage());
             return null;
         }
     }
