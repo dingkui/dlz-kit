@@ -522,7 +522,7 @@ class JSONMapTest {
 
             paras.put("a", "not a number");
             //有错误类型无法转换的，as结果为null
-            assertThrows(SystemException.class, () -> paras.as(TestBean.class));
+            assertThrows(NumberFormatException.class, () -> paras.as(TestBean.class));
         }
     }
 
