@@ -2,6 +2,7 @@ package com.dlz.kit.json;
 
 import com.dlz.kit.util.JacksonUtil;
 import com.dlz.kit.util.ValUtil;
+import com.dlz.kit.util.system.ConvertUtil;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -346,7 +347,7 @@ public interface IUniversalVals {
      * @return 指定类型的对象
      */
     default <T> T as(Class<T> classs) {
-        return JacksonUtil.coverObj(getInfoObject(), classs);
+        return ConvertUtil.convert(this,classs);
     }
 
     /**

@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.function.Function;
 
@@ -178,6 +179,11 @@ public class ValUtil {
         }
         if (input instanceof CharSequence || input instanceof Number) {
             return input.toString();
+        }
+        if (input instanceof Date) {
+            return DateUtil.DATETIME.format((Date) input);
+        } else if (input instanceof TemporalAccessor) {
+            return DateUtil.DATETIME.format((TemporalAccessor) input) ;
         }
         return JacksonUtil.getJson(input);
     }
