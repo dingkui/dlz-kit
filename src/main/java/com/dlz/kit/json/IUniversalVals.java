@@ -347,7 +347,7 @@ public interface IUniversalVals {
      * @return 指定类型的对象
      */
     default <T> T as(Class<T> classs) {
-        return ConvertUtil.convert(this,classs);
+        return ConvertUtil.convert(getInfoObject(),classs);
     }
 
     /**
