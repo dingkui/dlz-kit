@@ -295,15 +295,17 @@ public class JacksonUtil {
      * @param content 待转换的内容，支持多种类型
      * @param valueType 目标类型
      * @param <T> 目标类型泛型
-     * @return 指定类型的对象，如果转换失败则返回null
+     * @return 指定类型的对象
+     * @throws SystemException 如果转换失败
      */
     public static <T> T readValue(Object content, JavaType valueType) {
         try {
             String json = toJsonString(content);
             return objectMapper.readValue(json, valueType);
         } catch (Exception e) {
-            log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + content + " valueType:" + valueType, e));
-            return null;
+            String msg = "JSON反序列化转换失败:type=" + valueType + " content=" + content;
+            log.error(ExceptionUtils.getStackTrace(msg, e));
+            throw new SystemException(msg, e);
         }
     }
 
@@ -313,15 +315,17 @@ public class JacksonUtil {
      * @param content 待转换的内容，支持多种类型
      * @param valueType 目标类型引用
      * @param <T> 目标类型泛型
-     * @return 指定类型的对象，如果转换失败则返回null
+     * @return 指定类型的对象
+     * @throws SystemException 如果转换失败
      */
     public static <T> T readValue(Object content, TypeReference<T> valueType) {
         try {
             String json = toJsonString(content);
             return objectMapper.readValue(json, valueType);
         } catch (Exception e) {
-            log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + content + " valueType:" + valueType, e));
-            return null;
+            String msg = "JSON反序列化转换失败:type=" + valueType + " content=" + content;
+            log.error(ExceptionUtils.getStackTrace(msg, e));
+            throw new SystemException(msg, e);
         }
     }
 
@@ -381,14 +385,16 @@ public class JacksonUtil {
      * @param content JSON字符串内容
      * @param valueType 目标类型引用
      * @param <T> 目标类型泛型
-     * @return 指定类型的对象，如果转换失败则返回null
+     * @return 指定类型的对象
+     * @throws SystemException 如果转换失败
      */
     public static <T> T readValue(String content, TypeReference<T> valueType) {
         try {
             return objectMapper.readValue(content, valueType);
         } catch (Exception e) {
-            log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + content + " valueType:" + valueType, e));
-            return null;
+            String msg = "JSON反序列化转换失败:type=" + valueType + " content=" + content;
+            log.error(ExceptionUtils.getStackTrace(msg, e));
+            throw new SystemException(msg, e);
         }
     }
 
@@ -653,13 +659,12 @@ public class JacksonUtil {
      * @return 获取的对象
      */
     private static Object getObjFromList(Collection list, String key) {
-        // 优化 4：提前检查边界
+        // 提前检查边界
         int end = key.indexOf(']');
         if (end <= 1) {  // "[" 后面至少要有一个字符
             return null;
         }
         
-        // 优化 5：使用 try-catch 避免重复的边界检查
         try {
             int index = Integer.parseInt(key.substring(1, end));
             int size = list.size();
@@ -674,12 +679,12 @@ public class JacksonUtil {
                 return null;
             }
             
-            // 优化 6：对于 List 使用 get，对于其他 Collection 使用迭代器
             Object element;
             if (list instanceof List) {
                 element = ((List) list).get(index);
             } else {
                 // 对于非 List 的 Collection，使用迭代器
+                element = null;
                 int i = 0;
                 for (Object obj : list) {
                     if (i++ == index) {
@@ -687,7 +692,6 @@ public class JacksonUtil {
                         break;
                     }
                 }
-                return null;  // 不应该到这里
             }
             
             // 递归处理剩余路径

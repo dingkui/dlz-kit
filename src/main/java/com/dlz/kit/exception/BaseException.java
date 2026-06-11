@@ -49,7 +49,7 @@ public class BaseException extends RuntimeException {
     public BaseException(int code, String message, Throwable cause) {
         this(code, message);
         if (cause != null) {
-            this.addSuppressed(cause);
+            this.initCause(cause);
         }
     }
 

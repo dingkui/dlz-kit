@@ -1,8 +1,5 @@
 package com.dlz.kit.cache;
 
-import com.dlz.kit.util.ExceptionUtils;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -12,7 +9,6 @@ import java.util.concurrent.Callable;
  *
  * @author dk
  */
-@Slf4j
 public class CacheUtil {
     private static ICache cache;
     public static void init(ICache c) {
@@ -71,9 +67,10 @@ public class CacheUtil {
     public static <T> T get(String cacheName, String key, Callable<T> valueLoader) {
         try {
             return getCache(cacheName).getAndSetForever(cacheName, key, valueLoader);
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
-            log.error(ExceptionUtils.getStackTrace(e));
-            return null;
+            throw new RuntimeException("缓存加载失败:cacheName=" + cacheName + " key=" + key, e);
         }
     }
     /**
@@ -82,9 +79,10 @@ public class CacheUtil {
     public static <T> List<T> getList(String cacheName, String key, Callable<List<T>> valueLoader, Class<T> type) {
         try {
             return getCache(cacheName).getAndSetListForever(cacheName, key, valueLoader,type);
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
-            log.error(ExceptionUtils.getStackTrace(e));
-            return null;
+            throw new RuntimeException("缓存列表加载失败:cacheName=" + cacheName + " key=" + key, e);
         }
     }
 

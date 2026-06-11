@@ -290,17 +290,11 @@ public class ValUtil {
             }
             return toArray(string.split(","), clazz);
         }
-        try {
-            String string = toStr(input);
-            if (JacksonUtil.isJsonArray(string)) {
-                return toArray(JacksonUtil.readListValue(string, clazz), clazz);
-            } else {
-                throw new RuntimeException("参数不能转换成List:" + string);
-            }
-        } catch (RuntimeException e) {
-            log.warn(e.getMessage());
+        String string = toStr(input);
+        if (JacksonUtil.isJsonArray(string)) {
+            return toArray(JacksonUtil.readListValue(string, clazz), clazz);
         }
-        return null;
+        throw new SystemException("参数不能转换成数组:" + string);
     }
 
     public static LocalDateTime toLocalDateTime(Object input, String format, LocalDateTime defaultV) {
