@@ -223,7 +223,7 @@ public class JacksonUtil {
         try {
             return objectMapper.readValue(content, valueType);
         } catch (Exception e) {
-            String msg = "JSON反序列化转换失败:type="+valueType+" content="+content;
+            String msg = "JSON反序列化转换失败:type="+valueType+" content="+truncateForLog(content);
             log.error(msg);
             log.error(ExceptionUtils.getStackTrace(e));
             throw new SystemException(msg);
@@ -241,7 +241,7 @@ public class JacksonUtil {
         try {
             return objectMapper.readValue(content, valueType);
         } catch (Exception e) {
-            log.error("JacksonUtil.readValue error:valueType={} content={}", valueType, content);
+            log.error("JacksonUtil.readValue error:valueType={} content={}", valueType, truncateForLog(content));
             log.error(ExceptionUtils.getStackTrace(e));
             return null;
         }
@@ -302,7 +302,7 @@ public class JacksonUtil {
             String json = toJsonString(content);
             return objectMapper.readValue(json, valueType);
         } catch (Exception e) {
-            log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + content + " valueType:" + valueType, e));
+            log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + truncateForLog(content) + " valueType:" + valueType, e));
             return null;
         }
     }
@@ -320,7 +320,7 @@ public class JacksonUtil {
             String json = toJsonString(content);
             return objectMapper.readValue(json, valueType);
         } catch (Exception e) {
-            log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + content + " valueType:" + valueType, e));
+            log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + truncateForLog(content) + " valueType:" + valueType, e));
             return null;
         }
     }
@@ -387,7 +387,7 @@ public class JacksonUtil {
         try {
             return objectMapper.readValue(content, valueType);
         } catch (Exception e) {
-            log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + content + " valueType:" + valueType, e));
+            log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + truncateForLog(content) + " valueType:" + valueType, e));
             return null;
         }
     }
@@ -804,6 +804,22 @@ public class JacksonUtil {
 //            return TypeFactory.defaultInstance().constructParametricType((Class) type, new JavaType[0]);
             return objectMapper.getTypeFactory().constructType(type);
         }
+    }
+
+    private static final int LOG_CONTENT_MAX_LENGTH = 200;
+
+    /**
+     * 截断内容用于日志输出，防止敏感数据泄露到日志中
+     */
+    private static String truncateForLog(Object content) {
+        if (content == null) {
+            return "null";
+        }
+        String str = content.toString();
+        if (str.length() <= LOG_CONTENT_MAX_LENGTH) {
+            return str;
+        }
+        return str.substring(0, LOG_CONTENT_MAX_LENGTH) + "...(truncated, length=" + str.length() + ")";
     }
 
     private static Pattern JsonObjPattern = Pattern.compile("^\\{.*\\}$");

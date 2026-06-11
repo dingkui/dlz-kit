@@ -171,7 +171,29 @@ public class MemoryCache implements ICache {
     }
 
     /**
-     * 根据通配符前缀过滤键流
+     * 将 glob 风格的 keyPrefix 安全地转换为正则表达式
+     * 对非通配符部分使用 Pattern.quote 转义，防止 ReDoS 攻击
+     */
+    private static String sanitizeGlobToRegex(String glob) {
+        StringBuilder sb = new StringBuilder();
+        int start = 0;
+        for (int i = 0; i < glob.length(); i++) {
+            if (glob.charAt(i) == '*') {
+                if (i > start) {
+                    sb.append(Pattern.quote(glob.substring(start, i)));
+                }
+                sb.append(".*");
+                start = i + 1;
+            }
+        }
+        if (start < glob.length()) {
+            sb.append(Pattern.quote(glob.substring(start)));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 根据通配符前缀过滤键流（使用 sanitizeGlobToRegex 防止 ReDoS）
      *
      * @param keys 键流
      * @param keyPrefix 键前缀，支持通配符*
@@ -181,7 +203,7 @@ public class MemoryCache implements ICache {
         if ("*".equals(keyPrefix) || ".*".equals(keyPrefix)) {
             return keys;
         }
-        String regex = keyPrefix.replaceAll("\\.\\*", ".*").replaceAll("\\*", ".*");
+        String regex = sanitizeGlobToRegex(keyPrefix);
         Pattern pattern = Pattern.compile(regex);
         return keys.filter(pattern.asPredicate());
     }
