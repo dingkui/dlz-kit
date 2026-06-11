@@ -182,8 +182,12 @@ public class ValUtil {
         }
         if (input instanceof Date) {
             return DateUtil.DATETIME.format((Date) input);
+        } else if (input instanceof LocalDateTime) {
+            return DateUtil.DATETIME.format((LocalDateTime) input);
+        } else if (input instanceof LocalDate) {
+            return DateUtil.DATE.format((LocalDate) input);
         } else if (input instanceof TemporalAccessor) {
-            return DateUtil.DATETIME.format((TemporalAccessor) input) ;
+            return input.toString();
         }
         return JacksonUtil.getJson(input);
     }
