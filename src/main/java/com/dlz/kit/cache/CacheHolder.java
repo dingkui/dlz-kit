@@ -71,8 +71,8 @@ public class CacheHolder {
     }
 
     public static void add(String cacheName, ICache cache) {
-        SystemException.isTrue(CacheSet.containsKey(cacheName), () -> "缓存已经存在，不能重复定义：" + cacheName);
-        SystemException.isTrue(cache == null, () -> "ICache 未定义！");
+        SystemException.isTrue(!CacheSet.containsKey(cacheName), () -> "缓存已经存在，不能重复定义：" + cacheName);
+        SystemException.isTrue(cache != null, () -> "ICache 未定义！");
         CacheSet.put(cacheName, cache);
     }
 }
