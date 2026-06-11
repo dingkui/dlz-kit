@@ -90,7 +90,7 @@ class NativeConvertTest {
     @Test
     @DisplayName("convertList 空列表返回空")
     void testConvertListEmpty() {
-        List<Integer> result = converter.convertList(List.of(), String.class, Integer.class, null);
+        List<Integer> result = converter.convertList(Arrays.asList(), String.class, Integer.class, null);
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }

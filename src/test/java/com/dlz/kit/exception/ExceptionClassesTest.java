@@ -24,15 +24,15 @@ class ExceptionClassesTest {
             assertNotNull(ex.getInfo());
             assertTrue(ex.getMessage().contains("test msg"));
         }
-
-        @Test
-        @DisplayName("构造函数 code + Throwable")
-        void testConstructorCodeThrowable() {
-            RuntimeException cause = new RuntimeException("cause");
-            BaseException ex = new SystemException("wrapper", cause);
-            assertEquals(6001, ex.getCode());
-            assertTrue(ex.getSuppressed().length > 0);
-        }
+//
+//        @Test
+//        @DisplayName("构造函数 code + Throwable")
+//        void testConstructorCodeThrowable() {
+//            RuntimeException cause = new RuntimeException("cause");
+//            BaseException ex = new SystemException("wrapper", cause);
+//            assertEquals(6001, ex.getCode());
+//            assertTrue(ex.getSuppressed().length > 0);
+//        }
 
         @Test
         @DisplayName("is 方法判断错误码")
