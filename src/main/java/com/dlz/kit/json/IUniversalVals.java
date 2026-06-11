@@ -1,5 +1,6 @@
 package com.dlz.kit.json;
 
+import com.dlz.kit.exception.SystemException;
 import com.dlz.kit.util.JacksonUtil;
 import com.dlz.kit.util.ValUtil;
 import com.dlz.kit.util.system.ConvertUtil;
@@ -347,7 +348,11 @@ public interface IUniversalVals {
      * @return 指定类型的对象
      */
     default <T> T as(Class<T> classs) {
-        return ConvertUtil.convert(this,classs);
+        try {
+            return ConvertUtil.convert(getInfoObject(), classs);
+        } catch (NumberFormatException e) {
+            throw new SystemException("类型转换失败: " + e.getMessage(), e);
+        }
     }
 
     /**

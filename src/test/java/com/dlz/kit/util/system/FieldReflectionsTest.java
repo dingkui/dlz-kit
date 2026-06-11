@@ -1,5 +1,7 @@
 package com.dlz.kit.util.system;
 
+import com.dlz.kit.exception.SystemException;
+import com.dlz.kit.exception.ValidateException;
 import com.dlz.kit.fn.DlzFn;
 import com.dlz.kit.util.VAL;
 import com.dlz.test.beans.ChildEntity;
@@ -110,8 +112,8 @@ public class FieldReflectionsTest {
         assertFalse("忽略模式下不存在字段应返回false", ignoreResult);
 
 
-        assertThrows(Exception.class,()->FieldReflections.setValue(testEntity, "nonExistField", "value", false));
-        assertThrows(Exception.class,()->FieldReflections.setValue(null, "name", "value", false));
+        assertThrows(SystemException.class,()->FieldReflections.setValue(testEntity, "nonExistField", "value", false));
+        assertThrows(ValidateException.class,()->FieldReflections.setValue(null, "name", "value", false));
 
         
         // 测试null对象忽略模式

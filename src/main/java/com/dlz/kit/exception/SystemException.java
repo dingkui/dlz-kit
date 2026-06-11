@@ -55,6 +55,7 @@ public class SystemException extends BaseException {
         if (cause instanceof Error) {
             return new SystemException(cause.getMessage(), cause);
         } else if (cause instanceof IllegalAccessException ||
+                cause instanceof IllegalArgumentException ||
                 cause instanceof ValidateException ||
                 cause instanceof NoSuchMethodException) {
             return new SystemException("无效访问：" + cause.getMessage(), cause);
