@@ -223,7 +223,7 @@ public class JacksonUtil {
         try {
             return objectMapper.readValue(content, valueType);
         } catch (Exception e) {
-            String msg = "JSON反序列化转换失败:type="+valueType+" content="+content;
+            String msg = "JSON反序列化转换失败:type="+valueType+" content="+truncateForLog(content);
             log.error(msg);
             log.error(ExceptionUtils.getStackTrace(e));
             throw new SystemException(msg);
@@ -241,7 +241,7 @@ public class JacksonUtil {
         try {
             return objectMapper.readValue(content, valueType);
         } catch (Exception e) {
-            log.error("JacksonUtil.readValue error:valueType={} content={}", valueType, content);
+            log.error("JacksonUtil.readValue error:valueType={} content={}", valueType, truncateForLog(content));
             log.error(ExceptionUtils.getStackTrace(e));
             return null;
         }
@@ -295,17 +295,15 @@ public class JacksonUtil {
      * @param content 待转换的内容，支持多种类型
      * @param valueType 目标类型
      * @param <T> 目标类型泛型
-     * @return 指定类型的对象
-     * @throws SystemException 如果转换失败
+     * @return 指定类型的对象，如果转换失败则返回null
      */
     public static <T> T readValue(Object content, JavaType valueType) {
         try {
             String json = toJsonString(content);
             return objectMapper.readValue(json, valueType);
         } catch (Exception e) {
-            String msg = "JSON反序列化转换失败:type=" + valueType + " content=" + content;
-            log.error(ExceptionUtils.getStackTrace(msg, e));
-            throw new SystemException(msg, e);
+            log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + truncateForLog(content) + " valueType:" + valueType, e));
+            return null;
         }
     }
 
@@ -315,17 +313,15 @@ public class JacksonUtil {
      * @param content 待转换的内容，支持多种类型
      * @param valueType 目标类型引用
      * @param <T> 目标类型泛型
-     * @return 指定类型的对象
-     * @throws SystemException 如果转换失败
+     * @return 指定类型的对象，如果转换失败则返回null
      */
     public static <T> T readValue(Object content, TypeReference<T> valueType) {
         try {
             String json = toJsonString(content);
             return objectMapper.readValue(json, valueType);
         } catch (Exception e) {
-            String msg = "JSON反序列化转换失败:type=" + valueType + " content=" + content;
-            log.error(ExceptionUtils.getStackTrace(msg, e));
-            throw new SystemException(msg, e);
+            log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + truncateForLog(content) + " valueType:" + valueType, e));
+            return null;
         }
     }
 
@@ -385,16 +381,14 @@ public class JacksonUtil {
      * @param content JSON字符串内容
      * @param valueType 目标类型引用
      * @param <T> 目标类型泛型
-     * @return 指定类型的对象
-     * @throws SystemException 如果转换失败
+     * @return 指定类型的对象，如果转换失败则返回null
      */
     public static <T> T readValue(String content, TypeReference<T> valueType) {
         try {
             return objectMapper.readValue(content, valueType);
         } catch (Exception e) {
-            String msg = "JSON反序列化转换失败:type=" + valueType + " content=" + content;
-            log.error(ExceptionUtils.getStackTrace(msg, e));
-            throw new SystemException(msg, e);
+            log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + truncateForLog(content) + " valueType:" + valueType, e));
+            return null;
         }
     }
 
@@ -664,7 +658,7 @@ public class JacksonUtil {
         if (end <= 1) {  // "[" 后面至少要有一个字符
             return null;
         }
-        
+
         try {
             int index = Integer.parseInt(key.substring(1, end));
             int size = list.size();
@@ -679,12 +673,12 @@ public class JacksonUtil {
                 return null;
             }
             
+            // 优化 6：对于 List 使用 get，对于其他 Collection 使用迭代器
             Object element;
             if (list instanceof List) {
                 element = ((List) list).get(index);
             } else {
                 // 对于非 List 的 Collection，使用迭代器
-                element = null;
                 int i = 0;
                 for (Object obj : list) {
                     if (i++ == index) {
@@ -692,6 +686,7 @@ public class JacksonUtil {
                         break;
                     }
                 }
+                return null;  // 不应该到这里
             }
             
             // 递归处理剩余路径
@@ -808,6 +803,22 @@ public class JacksonUtil {
 //            return TypeFactory.defaultInstance().constructParametricType((Class) type, new JavaType[0]);
             return objectMapper.getTypeFactory().constructType(type);
         }
+    }
+
+    private static final int LOG_CONTENT_MAX_LENGTH = 200;
+
+    /**
+     * 截断内容用于日志输出，防止敏感数据泄露到日志中
+     */
+    private static String truncateForLog(Object content) {
+        if (content == null) {
+            return "null";
+        }
+        String str = content.toString();
+        if (str.length() <= LOG_CONTENT_MAX_LENGTH) {
+            return str;
+        }
+        return str.substring(0, LOG_CONTENT_MAX_LENGTH) + "...(truncated, length=" + str.length() + ")";
     }
 
     private static Pattern JsonObjPattern = Pattern.compile("^\\{.*\\}$");

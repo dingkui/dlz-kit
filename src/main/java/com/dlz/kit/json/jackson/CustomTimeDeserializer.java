@@ -38,7 +38,7 @@ class CustomTimeDeserializer<T extends Temporal> extends StdScalarDeserializer<T
         if (t == JsonToken.VALUE_STRING) {
             value = p.getText().trim();
         } else {
-            throw ctxt.mappingException("Expected string value for " + type.getSimpleName() + ", got " + t.asString());
+            throw ctxt.weirdStringException(p.getText(), type, "Expected string value for " + type.getSimpleName() + ", got " + t.asString());
         }
 
         if (value.isEmpty()) {
