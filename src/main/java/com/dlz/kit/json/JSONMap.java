@@ -337,40 +337,20 @@ public class JSONMap extends HashMap<String, Object> implements IUniversalVals {
      * @param remainingKey 剩余键
      */
     private void handleArrayKeyRemove(String currentKey, String remainingKey) {
-        // 解析数组键，如 a[0][1] -> arrayName=a, indices=[0,1]
-        String arrayName;
-        List<Integer> indices = new ArrayList<>();
-
-        if(currentKey.startsWith("[")) {
-            // 以 [ 开头，如 [0] 或 [0][1]
-            arrayName = "";
-            parseArrayIndices(currentKey, 0, indices);
-        } else {
-            // 普通形式，如 a[0] 或 a[0][1]
-            int firstBracket = currentKey.indexOf("[");
-            arrayName = currentKey.substring(0, firstBracket);
-            parseArrayIndices(currentKey, firstBracket, indices);
-        }
+        ParsedArrayKey parsed = parseArrayKey(currentKey);
 
         // 获取数组
-        Object existing = arrayName.isEmpty() ? null : get(arrayName);
+        Object existing = parsed.arrayName.isEmpty() ? null : get(parsed.arrayName);
         
         if(existing == null) {
             // 数组不存在，无需删除
             return;
         }
 
-        JSONList list;
-        if(existing instanceof JSONList) {
-            list = (JSONList) existing;
-        } else if(existing instanceof List) {
-            list = new JSONList((List<?>) existing);
-        } else {
-            throw new SystemException("键 '" + arrayName + "' 的值类型不匹配，期望 JSONList，实际为 " + existing.getClass().getSimpleName());
-        }
+        JSONList list = toJSONList(existing, parsed.arrayName);
 
         // 递归处理多维数组索引删除
-        removeArrayValue(list, indices, 0, remainingKey);
+        removeArrayValue(list, parsed.indices, 0, remainingKey);
     }
 
     /**
@@ -445,41 +425,77 @@ public class JSONMap extends HashMap<String, Object> implements IUniversalVals {
      * @param value 要设置的值
      */
     private void handleArrayKey(String currentKey, String remainingKey, Object value) {
-        // 解析数组键，如 a[0][1] -> arrayName=a, indices=[0,1]
+        ParsedArrayKey parsed = parseArrayKey(currentKey);
+
+        // 获取或创建数组
+        Object existing = parsed.arrayName.isEmpty() ? null : get(parsed.arrayName);
+        JSONList list;
+
+        if(existing == null) {
+            list = new JSONList();
+            if(!parsed.arrayName.isEmpty()) {
+                put(parsed.arrayName, list);
+            }
+        } else {
+            list = toJSONList(existing, parsed.arrayName);
+            if(!(existing instanceof JSONList)) {
+                put(parsed.arrayName, list);
+            }
+        }
+
+        // 递归处理多维数组索引
+        setArrayValue(list, parsed.indices, 0, remainingKey, value);
+    }
+
+    /**
+     * 解析数组键，提取数组名称和索引列表
+     *
+     * @param currentKey 当前键，如 a[0][1] 或 [0]
+     * @return 解析后的数组键信息
+     */
+    private ParsedArrayKey parseArrayKey(String currentKey) {
         String arrayName;
         List<Integer> indices = new ArrayList<>();
 
         if(currentKey.startsWith("[")) {
-            // 以 [ 开头，如 [0] 或 [0][1]
             arrayName = "";
             parseArrayIndices(currentKey, 0, indices);
         } else {
-            // 普通形式，如 a[0] 或 a[0][1]
             int firstBracket = currentKey.indexOf("[");
             arrayName = currentKey.substring(0, firstBracket);
             parseArrayIndices(currentKey, firstBracket, indices);
         }
 
-        // 获取或创建数组
-        Object existing = arrayName.isEmpty() ? null : get(arrayName);
-        JSONList list;
+        return new ParsedArrayKey(arrayName, indices);
+    }
 
-        if(existing == null) {
-            list = new JSONList();
-            if(!arrayName.isEmpty()) {
-                put(arrayName, list);
-            }
-        } else if(existing instanceof JSONList) {
-            list = (JSONList) existing;
+    /**
+     * 将已有对象转换为JSONList
+     *
+     * @param existing 已有对象
+     * @param keyName 键名（用于错误消息）
+     * @return JSONList实例
+     */
+    private static JSONList toJSONList(Object existing, String keyName) {
+        if(existing instanceof JSONList) {
+            return (JSONList) existing;
         } else if(existing instanceof List) {
-            list = new JSONList((List<?>) existing);
-            put(arrayName, list);
-        } else {
-            throw new SystemException("键 '" + arrayName + "' 的值类型不匹配，期望 JSONList，实际为 " + existing.getClass().getSimpleName());
+            return new JSONList((List<?>) existing);
         }
+        throw new SystemException("键 '" + keyName + "' 的值类型不匹配，期望 JSONList，实际为 " + existing.getClass().getSimpleName());
+    }
 
-        // 递归处理多维数组索引
-        setArrayValue(list, indices, 0, remainingKey, value);
+    /**
+     * 解析后的数组键信息
+     */
+    private static class ParsedArrayKey {
+        final String arrayName;
+        final List<Integer> indices;
+
+        ParsedArrayKey(String arrayName, List<Integer> indices) {
+            this.arrayName = arrayName;
+            this.indices = indices;
+        }
     }
 
     /**

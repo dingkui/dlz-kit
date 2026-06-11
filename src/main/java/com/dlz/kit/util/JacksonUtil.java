@@ -282,22 +282,8 @@ public class JacksonUtil {
      */
     public static JsonNode readTree(Object content) {
         try {
-            if (content instanceof CharSequence) {
-                return objectMapper.readTree(content.toString());
-            } else if (content instanceof byte[]) {
-                return objectMapper.readTree((byte[]) content);
-            } else if (content instanceof InputStream) {
-                return objectMapper.readTree((InputStream) content);
-            } else if (content instanceof File) {
-                return objectMapper.readTree((File) content);
-            } else if (content instanceof URL) {
-                return objectMapper.readTree((URL) content);
-            } else if (content instanceof Reader) {
-                return objectMapper.readTree((Reader) content);
-            } else if (content instanceof JsonParser) {
-                return objectMapper.readTree((JsonParser) content);
-            }
-            return objectMapper.readTree(getJson(content));
+            String json = toJsonString(content);
+            return objectMapper.readTree(json);
         } catch (IOException e) {
             throw SystemException.build(e);
         }
@@ -313,24 +299,8 @@ public class JacksonUtil {
      */
     public static <T> T readValue(Object content, JavaType valueType) {
         try {
-            if (content instanceof CharSequence) {
-                return objectMapper.readValue(content.toString(), valueType);
-            } else if (content instanceof byte[]) {
-                return objectMapper.readValue((byte[]) content, valueType);
-            } else if (content instanceof InputStream) {
-                return objectMapper.readValue((InputStream) content, valueType);
-            } else if (content instanceof File) {
-                return objectMapper.readValue((File) content, valueType);
-            } else if (content instanceof URL) {
-                return objectMapper.readValue((URL) content, valueType);
-            } else if (content instanceof Reader) {
-                return objectMapper.readValue((Reader) content, valueType);
-            } else if (content instanceof DataInput) {
-                return objectMapper.readValue((DataInput) content, valueType);
-            } else if (content instanceof JsonParser) {
-                return objectMapper.readValue((JsonParser) content, valueType);
-            }
-            return objectMapper.readValue(getJson(content), valueType);
+            String json = toJsonString(content);
+            return objectMapper.readValue(json, valueType);
         } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + content + " valueType:" + valueType, e));
             return null;
@@ -347,26 +317,62 @@ public class JacksonUtil {
      */
     public static <T> T readValue(Object content, TypeReference<T> valueType) {
         try {
-            if (content instanceof CharSequence) {
-                return objectMapper.readValue(content.toString(), valueType);
-            } else if (content instanceof byte[]) {
-                return objectMapper.readValue((byte[]) content, valueType);
-            } else if (content instanceof InputStream) {
-                return objectMapper.readValue((InputStream) content, valueType);
-            } else if (content instanceof File) {
-                return objectMapper.readValue((File) content, valueType);
-            } else if (content instanceof URL) {
-                return objectMapper.readValue((URL) content, valueType);
-            } else if (content instanceof Reader) {
-                return objectMapper.readValue((Reader) content, valueType);
-            } else if (content instanceof JsonParser) {
-                return objectMapper.readValue((JsonParser) content, valueType);
-            }
-            return objectMapper.readValue(getJson(content), valueType);
+            String json = toJsonString(content);
+            return objectMapper.readValue(json, valueType);
         } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace("JacksonUtil.readValue error,content:" + content + " valueType:" + valueType, e));
             return null;
         }
+    }
+
+    /**
+     * 将各种类型的内容统一转换为JSON字符串
+     *
+     * @param content 待转换的内容，支持CharSequence、byte[]、InputStream、File、URL、Reader等
+     * @return JSON字符串
+     */
+    private static String toJsonString(Object content) throws IOException {
+        if (content instanceof CharSequence) {
+            return content.toString();
+        } else if (content instanceof byte[]) {
+            return new String((byte[]) content, java.nio.charset.StandardCharsets.UTF_8);
+        } else if (content instanceof InputStream) {
+            try (InputStream is = (InputStream) content) {
+                return new String(readAllBytes(is), java.nio.charset.StandardCharsets.UTF_8);
+            }
+        } else if (content instanceof File) {
+            try (FileInputStream fis = new FileInputStream((File) content)) {
+                return new String(readAllBytes(fis), java.nio.charset.StandardCharsets.UTF_8);
+            }
+        } else if (content instanceof URL) {
+            try (InputStream is = ((URL) content).openStream()) {
+                return new String(readAllBytes(is), java.nio.charset.StandardCharsets.UTF_8);
+            }
+        } else if (content instanceof Reader) {
+            try (Reader reader = (Reader) content) {
+                StringBuilder sb = new StringBuilder();
+                char[] buf = new char[4096];
+                int len;
+                while ((len = reader.read(buf)) != -1) {
+                    sb.append(buf, 0, len);
+                }
+                return sb.toString();
+            }
+        }
+        return getJson(content);
+    }
+
+    /**
+     * 从InputStream读取全部字节（兼容JDK8）
+     */
+    private static byte[] readAllBytes(InputStream is) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[4096];
+        int len;
+        while ((len = is.read(buf)) != -1) {
+            baos.write(buf, 0, len);
+        }
+        return baos.toByteArray();
     }
 
     /**

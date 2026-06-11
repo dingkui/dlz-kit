@@ -179,26 +179,7 @@ public class JSONList extends ArrayList<Object> implements IUniversalVals, IUniv
                     }
                     Arrays.stream(str.split(",")).forEach(item -> this.add(item.trim()));
                     return;
-                } else if(objectClass == Integer.class) {
-                    Arrays.stream(str.split(",")).forEach(item -> this.add(ValUtil.toInt(item.trim())));
-                    return;
-                } else if(objectClass == Long.class) {
-                    Arrays.stream(str.split(",")).forEach(item -> this.add(ValUtil.toLong(item.trim())));
-                    return;
-                } else if(objectClass == Date.class) {
-                    Arrays.stream(str.split(",")).forEach(item -> this.add(ValUtil.toDate(item.trim())));
-                    return;
-                } else if(objectClass == BigDecimal.class) {
-                    Arrays.stream(str.split(",")).forEach(item -> this.add(ValUtil.toBigDecimal(item.trim())));
-                    return;
-                } else if(objectClass == Float.class) {
-                    Arrays.stream(str.split(",")).forEach(item -> this.add(ValUtil.toFloat(item.trim())));
-                    return;
-                } else if(objectClass == Double.class) {
-                    Arrays.stream(str.split(",")).forEach(item -> this.add(ValUtil.toDouble(item.trim())));
-                    return;
-                } else if(objectClass == Boolean.class) {
-                    Arrays.stream(str.split(",")).forEach(item -> this.add(ValUtil.toBoolean(item.trim())));
+                } else if(splitAndConvertNative(str, objectClass)) {
                     return;
                 }
             }
@@ -209,6 +190,22 @@ public class JSONList extends ArrayList<Object> implements IUniversalVals, IUniv
                 this.addAll(JacksonUtil.readList(str));
             }
         }
+    }
+
+    /**
+     * 按逗号分隔字符串并转换为原生类型，添加到当前列表
+     *
+     * @param str 逗号分隔的字符串
+     * @param objectClass 目标类型
+     * @return 是否成功处理（类型是否为已知的原生类型）
+     */
+    private boolean splitAndConvertNative(String str, Class<?> objectClass) {
+        if (!ValUtil.isNativeType(objectClass)) {
+            return false;
+        }
+        Arrays.stream(str.split(","))
+                .forEach(item -> this.add(ValUtil.toNativeObj(item.trim(), objectClass)));
+        return true;
     }
 
     /**

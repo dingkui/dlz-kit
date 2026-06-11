@@ -140,24 +140,11 @@ public class MemoryCache implements ICache {
      */
     @Override
     public Set<String> keys(String name, String keyPrefix) {
-        // 获取缓存中的键流
         Stream<String> stringStream = getCache(name).keySet().stream()
                 .map(key -> ValUtil.toStr(key));
 
-        // 如果 keyPrefix 是 "*" 或 ".*"，直接返回所有键
-        if ("*".equals(keyPrefix) || ".*".equals(keyPrefix)) {
-            return stringStream.collect(Collectors.toSet());
-        }
-
-        // 将 keyPrefix 转换为正则表达式
-        String regex = keyPrefix.replaceAll("\\.\\*", ".*").replaceAll("\\*", ".*");
-        Pattern pattern = Pattern.compile(regex);
-
-        // 过滤并返回匹配的键
-        return stringStream
-                .filter(pattern.asPredicate())
+        return filterByPrefix(stringStream, keyPrefix)
                 .collect(Collectors.toSet());
-
     }
 
     /**
@@ -171,18 +158,32 @@ public class MemoryCache implements ICache {
     public Map<String, Serializable> all(String name, String keyPrefix) {
         Map<Serializable, Element> cache = getCache(name);
         Map<String, Serializable> map = new ConcurrentHashMap<>();
-        if ("*".equals(keyPrefix) || ".*".equals(keyPrefix)) {
-            cache.forEach((key, value) -> map.put(ValUtil.toStr(key), value.item));
-        } else {
-            Pattern p = Pattern.compile(keyPrefix.replaceAll("\\.\\*", "*").replaceAll("\\*", ".*"));
-            cache.forEach((key, value) -> {
-                String keyStr = ValUtil.toStr(key);
-                if (p.matcher(keyStr).matches()) {
-                    map.put(keyStr, value.item);
-                }
-            });
+        Set<String> matchedKeys = filterByPrefix(
+                cache.keySet().stream().map(key -> ValUtil.toStr(key)), keyPrefix)
+                .collect(Collectors.toSet());
+        for (String keyStr : matchedKeys) {
+            Element element = cache.get(keyStr);
+            if (element != null) {
+                map.put(keyStr, element.item);
+            }
         }
         return map;
+    }
+
+    /**
+     * 根据通配符前缀过滤键流
+     *
+     * @param keys 键流
+     * @param keyPrefix 键前缀，支持通配符*
+     * @return 过滤后的键流
+     */
+    private static Stream<String> filterByPrefix(Stream<String> keys, String keyPrefix) {
+        if ("*".equals(keyPrefix) || ".*".equals(keyPrefix)) {
+            return keys;
+        }
+        String regex = keyPrefix.replaceAll("\\.\\*", ".*").replaceAll("\\*", ".*");
+        Pattern pattern = Pattern.compile(regex);
+        return keys.filter(pattern.asPredicate());
     }
 
     /**

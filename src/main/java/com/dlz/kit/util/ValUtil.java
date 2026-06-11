@@ -400,6 +400,13 @@ public class ValUtil {
         natveConverts.put(null, input -> input);
     }
 
+    /**
+     * 检查指定类型是否为已注册的原生类型
+     */
+    public static boolean isNativeType(Class<?> clazz) {
+        return clazz != null && natveConverts.containsKey(clazz);
+    }
+
     public static <T> T toNativeObj(Object input, Class<T> clazz) {
         if (input == null) {
             return null;
@@ -445,22 +452,7 @@ public class ValUtil {
     }
 
     public static boolean isEmpty(Object cs) {
-        if (cs == null) {
-            return true;
-        }
-        if (cs instanceof CharSequence) {
-            return ((CharSequence) cs).length() == 0;
-        }
-        if (cs instanceof Collection) {
-            return ((Collection) cs).isEmpty();
-        }
-        if (cs instanceof Map) {
-            return ((Map) cs).isEmpty();
-        }
-        if (cs.getClass().isArray()) {
-            return Array.getLength(cs) == 0;  // 支持所有数组类型（包括基本类型数组）
-        }
-        return false;
+        return StringUtils.isEmpty(cs);
     }
 
 
