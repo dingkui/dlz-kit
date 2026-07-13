@@ -27,18 +27,19 @@ public class Reflections {
      * 将源对象的属性值复制到目标对象
      * 
      * @param source 源对象
-     * @param target 目标对象
      * @param <T> 对象类型泛型
      */
-    public static <T> void copy(T source, T target) {
+    public static <T> void copy(T source) {
         if (source == null) {
             throw new SystemException("source不能为空");
         }
-        if (target == null) {
-            throw new SystemException("target不能为空");
+        try {
+            T  target = (T)source.getClass().newInstance();
+            FieldReflections.getFields(source.getClass())
+                    .forEach(field -> FieldReflections.setValue(target, field, FieldReflections.getValue(source, field)));
+        } catch (Exception e) {
+            throw new SystemException("copy失败",e);
         }
-        FieldReflections.getFields(source.getClass())
-                .forEach(field -> FieldReflections.setValue(target, field, FieldReflections.getValue(source, field)));
     }
 
     /**
