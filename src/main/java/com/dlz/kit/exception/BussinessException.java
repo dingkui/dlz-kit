@@ -12,17 +12,14 @@ public class BussinessException extends BaseException {
 	 * Serial version UID
 	 */
 	private static final long serialVersionUID = -5345825923487658213L;
-	private static int DEFUALT_ERROR_CODE = 3001;
-    static {
-        ExceptionErrors.addErrors(3001, "业务异常");
-    }
+	private static final int DEFAULT_ERROR_CODE = 3001;
 
 	public BussinessException(String message, Throwable cause) {
-		this(DEFUALT_ERROR_CODE, message, cause);
+		this(DEFAULT_ERROR_CODE, message, cause);
 	}
 
 	public BussinessException(String message) {
-		this(DEFUALT_ERROR_CODE, message, null);
+		this(DEFAULT_ERROR_CODE, message, null);
 	}
 	
 	public BussinessException(int errorCode, String message, Throwable cause) {
@@ -37,7 +34,7 @@ public class BussinessException extends BaseException {
 	 * @param message    消息
 	 */
 	public static void isTrue(boolean expression, String message) {
-		if (expression) {
+		if (!expression) {
 			throw new BussinessException(message);
 		}
 	}
@@ -49,7 +46,7 @@ public class BussinessException extends BaseException {
 	 * @param c    消息
 	 */
 	public static void isTrue(boolean expression, Supplier<String> c) {
-		if (expression) {
+		if (!expression) {
 			throw new BussinessException(c.get());
 		}
 	}
@@ -62,7 +59,7 @@ public class BussinessException extends BaseException {
 	 * @param message 消息
 	 */
 	public static void notNull(Object object, String message) {
-		isTrue(object == null, message);
+		isTrue(object != null, message);
 	}
 
 	/**
@@ -94,6 +91,6 @@ public class BussinessException extends BaseException {
 	 * @param c 消息
 	 */
 	public static void notEmpty(Object value, Supplier<String> c) {
-		isTrue(StringUtils.isEmpty(value), c);
+		isTrue(!StringUtils.isEmpty(value), c);
 	}
 }
