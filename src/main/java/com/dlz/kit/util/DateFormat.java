@@ -55,9 +55,11 @@ public class DateFormat {
         if (sdf == null) {
             sdf = createInstance();
         }
-        String result = sdf.format(date);
-        queue.add(sdf);
-        return result;
+        try {
+            return sdf.format(date);
+        } finally {
+            queue.offer(sdf);
+        }
     }
 
     /**
@@ -84,17 +86,17 @@ public class DateFormat {
 
     public Date parse(String source){
         SimpleDateFormat sdf = queue.poll();
+        if (sdf == null) {
+            sdf = createInstance();
+        }
         try {
-            if (sdf == null) {
-                sdf = createInstance();
-            }
-            Date result = sdf.parse(source);
-            queue.add(sdf);
-            return result;
+            return sdf.parse(source);
         } catch (ParseException e) {
             log.error("Parse string to date error! input:{} pattern:{}", source, sdf.toPattern());
             log.error(ExceptionUtils.getStackTrace(e));
             return null;
+        } finally {
+            queue.offer(sdf);
         }
     }
 
