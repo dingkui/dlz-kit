@@ -9,6 +9,9 @@ import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,30 +29,24 @@ public class MemoryCache implements ICache {
     /**
      * 缓存存储结构：外层Map的key为缓存名称，内层Map的key为缓存键，value为缓存元素
      */
-    private final static Map<String, Map<Serializable, Element>> CACHE = new ConcurrentHashMap<>();
-    
-    /**
-     * 过期处理线程
-     */
-    private static ExpiredRunnable Expired = null;
-    
-    /**
-     * 缓存开始时间戳（秒）
-     */
-    private static Long BEGIN = System.currentTimeMillis() / 1000;
+    private static final Map<String, Map<Serializable, Element>> CACHE = new ConcurrentHashMap<>();
 
     /**
-     * 构造函数，初始化过期处理线程
+     * 使用守护线程回收长期未访问的过期项；缓存读取仍会执行惰性过期检查。
      */
+    private static final ScheduledExecutorService EXPIRATION_CLEANER =
+            Executors.newSingleThreadScheduledExecutor(runnable -> {
+                Thread thread = new Thread(runnable, "dlz-memory-cache-cleaner");
+                thread.setDaemon(true);
+                return thread;
+            });
+
+    static {
+        EXPIRATION_CLEANER.scheduleWithFixedDelay(
+                MemoryCache::purgeExpiredEntries, 1, 1, TimeUnit.SECONDS);
+    }
+
     public MemoryCache() {
-        if (Expired == null) {
-            synchronized (MemoryCache.class) {
-                if (Expired == null) {
-                    Expired = new ExpiredRunnable();
-                    new Thread(Expired).start();
-                }
-            }
-        }
     }
     /**
      * 构造函数，初始化过期处理线程
@@ -82,14 +79,19 @@ public class MemoryCache implements ICache {
      */
     @Override
     public <T extends Serializable> T get(String name, Serializable key, Type tClass) {
-        Element obj = getCache(name).get(key);
-        if (obj == null) {
+        Map<Serializable, Element> cache = getCache(name);
+        Element element = cache.get(key);
+        if (element == null) {
+            return null;
+        }
+        if (element.isExpired(System.currentTimeMillis())) {
+            cache.remove(key, element);
             return null;
         }
         if (tClass != null) {
-            return ValUtil.toObj(obj.item, JacksonUtil.mkJavaType(tClass));
+            return ValUtil.toObj(element.item, JacksonUtil.mkJavaType(tClass));
         }
-        return (T) obj.item;
+        return (T) element.item;
     }
 
     /**
@@ -98,16 +100,14 @@ public class MemoryCache implements ICache {
      * @param name 缓存名称
      * @param key 缓存键
      * @param value 缓存值
-     * @param seconds 过期时间（秒），-1表示永不过期
+     * @param seconds 过期时间（秒），小于等于0表示永不过期
      */
     @Override
     public void put(String name, Serializable key, Serializable value, int seconds) {
-        Element element = new Element(value);
-        if (seconds > 0) {
-            element.expired = System.currentTimeMillis() / 1000 + seconds - BEGIN;
-            Expired.setExpiredRange(element.expired);
-        }
-        getCache(name).put(ValUtil.toStr(key), element);
+        long expireAtMillis = seconds > 0
+                ? System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(seconds)
+                : Element.NEVER_EXPIRES;
+        getCache(name).put(key, new Element(value, expireAtMillis));
     }
 
     /**
@@ -118,7 +118,7 @@ public class MemoryCache implements ICache {
      */
     @Override
     public void remove(String name, Serializable key) {
-        getCache(name).remove(ValUtil.toStr(key));
+        getCache(name).remove(key);
     }
 
     /**
@@ -140,8 +140,11 @@ public class MemoryCache implements ICache {
      */
     @Override
     public Set<String> keys(String name, String keyPrefix) {
-        Stream<String> stringStream = getCache(name).keySet().stream()
-                .map(key -> ValUtil.toStr(key));
+        Map<Serializable, Element> cache = getCache(name);
+        long now = System.currentTimeMillis();
+        Stream<String> stringStream = cache.entrySet().stream()
+                .filter(entry -> retainUnexpired(cache, entry.getKey(), entry.getValue(), now))
+                .map(entry -> ValUtil.toStr(entry.getKey()));
 
         return filterByPrefix(stringStream, keyPrefix)
                 .collect(Collectors.toSet());
@@ -157,17 +160,36 @@ public class MemoryCache implements ICache {
     @Override
     public Map<String, Serializable> all(String name, String keyPrefix) {
         Map<Serializable, Element> cache = getCache(name);
-        Map<String, Serializable> map = new ConcurrentHashMap<>();
-        Set<String> matchedKeys = filterByPrefix(
-                cache.keySet().stream().map(key -> ValUtil.toStr(key)), keyPrefix)
-                .collect(Collectors.toSet());
-        for (String keyStr : matchedKeys) {
-            Element element = cache.get(keyStr);
-            if (element != null) {
-                map.put(keyStr, element.item);
+        Map<String, Serializable> result = new ConcurrentHashMap<>();
+        long now = System.currentTimeMillis();
+        cache.forEach((key, element) -> {
+            if (retainUnexpired(cache, key, element, now)) {
+                String keyString = ValUtil.toStr(key);
+                if (matchesPrefix(keyString, keyPrefix)) {
+                    result.put(keyString, element.item);
+                }
             }
+        });
+        return result;
+    }
+
+    private static boolean retainUnexpired(Map<Serializable, Element> cache,
+                                           Serializable key, Element element, long now) {
+        if (!element.isExpired(now)) {
+            return true;
         }
-        return map;
+        cache.remove(key, element);
+        return false;
+    }
+
+    private static void purgeExpiredEntries() {
+        try {
+            long now = System.currentTimeMillis();
+            CACHE.values().forEach(cache -> cache.forEach((key, element) ->
+                    retainUnexpired(cache, key, element, now)));
+        } catch (RuntimeException e) {
+            log.warn("Failed to clean expired memory cache entries", e);
+        }
     }
 
     /**
@@ -199,126 +221,32 @@ public class MemoryCache implements ICache {
      * @param keyPrefix 键前缀，支持通配符*
      * @return 过滤后的键流
      */
-    private static Stream<String> filterByPrefix(Stream<String> keys, String keyPrefix) {
+    private static boolean matchesPrefix(String key, String keyPrefix) {
         if ("*".equals(keyPrefix) || ".*".equals(keyPrefix)) {
-            return keys;
+            return true;
         }
-        String regex = sanitizeGlobToRegex(keyPrefix);
-        Pattern pattern = Pattern.compile(regex);
-        return keys.filter(pattern.asPredicate());
+        return Pattern.compile(sanitizeGlobToRegex(keyPrefix)).matcher(key).matches();
+    }
+
+    private static Stream<String> filterByPrefix(Stream<String> keys, String keyPrefix) {
+        return keys.filter(key -> matchesPrefix(key, keyPrefix));
     }
 
     /**
      * 缓存元素内部类
      */
-    class Element {
-        /**
-         * 过期时间戳
-         */
-        Long expired;
-        
-        /**
-         * 缓存项
-         */
-        Serializable item;
+    private static final class Element {
+        private static final long NEVER_EXPIRES = -1L;
+        private final long expireAtMillis;
+        private final Serializable item;
 
-        /**
-         * 构造函数
-         * 
-         * @param item 缓存项
-         */
-        Element(Serializable item) {
+        private Element(Serializable item, long expireAtMillis) {
             this.item = item;
-        }
-    }
-
-    /**
-     * 过期处理线程内部类
-     */
-    class ExpiredRunnable implements Runnable {
-        /**
-         * 过期开始时间
-         */
-        private volatile Long begin;
-        
-        /**
-         * 过期结束时间
-         */
-        private volatile Long end;
-
-        /**
-         * 设置过期时间范围
-         * 
-         * @param expired 过期时间戳
-         */
-        public void setExpiredRange(Long expired) {//设置过期区间
-            if (begin == null || expired < begin) {
-                begin = expired;
-            }
-            if (end == null || expired > end) {
-                end = expired;
-            }
+            this.expireAtMillis = expireAtMillis;
         }
 
-        /**
-         * 执行过期清理任务
-         */
-        public void run() {//重写run方法
-            while (true) {
-                try {
-                    Thread.sleep(1000);//实现定时去删除过期
-                    expired(System.currentTimeMillis() / 1000 - MemoryCache.BEGIN);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    log.error("ExpiredRunnable interrupted", e);
-                }
-            }
-        }
-
-        /**
-         * 清理过期缓存
-         * 
-         * @param curr 当前时间戳
-         * @return 是否执行了清理操作
-         */
-        private boolean expired(long curr) {
-            if (begin == null || end == null || begin > curr || end < curr) {
-                return false;
-            }
-            begin = null;
-            end = null;
-            MemoryCache.CACHE.entrySet().stream().parallel().forEach(item -> {
-                Map<Serializable, Element> cache = item.getValue();
-                cache.forEach((key, value) -> {
-                    if (value.expired != null) {
-                        if (value.expired < curr) {
-                            cache.remove(key);
-                        } else {
-                            setExpiredRange(value.expired);
-                        }
-                    }
-                });
-            });
-            return true;
-        }
-
-        /**
-         * 带日志的过期处理
-         * 
-         * @param curr 当前时间戳
-         */
-        private void expiredWithLog(long curr) {
-            long startTime = System.currentTimeMillis();
-            long totalSize = MemoryCache.CACHE.entrySet().stream().mapToLong(item -> item.getValue().size()).sum();
-
-            if (!expired(curr)) {
-                log.debug("skip: {}", totalSize);
-            }
-
-            long newSize = MemoryCache.CACHE.entrySet().stream().mapToLong(item -> item.getValue().size()).sum();
-            long memoryUsage = Runtime.getRuntime().totalMemory();
-
-            log.debug("sum: {} {} memory: {} time: {} {} {} {}", totalSize, newSize, memoryUsage, System.currentTimeMillis() - startTime, begin, curr, end);
+        private boolean isExpired(long now) {
+            return expireAtMillis != NEVER_EXPIRES && expireAtMillis <= now;
         }
     }
 }
