@@ -119,6 +119,27 @@ class MemoryCacheTest {
     }
 
     @Test
+    @DisplayName("过期缓存不可读取和枚举")
+    void testExpiredValueIsInvisible() throws InterruptedException {
+        cache.put("test", "expiring", "value", 1);
+        Thread.sleep(1100);
+
+        assertNull(cache.get("test", "expiring", null));
+        assertFalse(cache.keys("test").contains("expiring"));
+        assertFalse(cache.all("test").containsKey("expiring"));
+    }
+
+    @Test
+    @DisplayName("支持非字符串可序列化键")
+    void testSerializableKey() {
+        cache.put("test", 1, "value", -1);
+
+        assertEquals("value", cache.get("test", 1, null));
+        cache.remove("test", 1);
+        assertNull(cache.get("test", 1, null));
+    }
+
+    @Test
     @DisplayName("不同缓存名称隔离")
     void testCacheNameIsolation() {
         cache.put("cache1", "key", "v1", -1);

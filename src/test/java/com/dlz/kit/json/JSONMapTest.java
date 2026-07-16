@@ -555,13 +555,12 @@ class JSONMapTest {
         @Test
         @DisplayName("put方法测试")
         public void testPut() {
-            //输出：{"a":1}
-            assertEquals("{\"a\":1}", new JSONMap().put("a", 1).toString());
+            JSONMap map = new JSONMap();
+            assertEquals(map, map.put("a", 2));
+            assertEquals(2, map.getInt("a"));
 
-            //输出：{"a.b":1}
+            // with 保持普通键写入的链式能力，且不解析路径
             assertEquals("{\"a.b\":1}", new JSONMap().put("a.b", 1).toString());
-
-            //输出：{"a.c[1]":1}
             assertEquals("{\"a.c[1]\":1}", new JSONMap().put("a.c[1]", 1).toString());
         }
     }

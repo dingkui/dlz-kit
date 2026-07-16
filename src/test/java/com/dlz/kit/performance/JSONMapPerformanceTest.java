@@ -4,18 +4,20 @@ import com.dlz.kit.json.JSONMap;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 /**
  * JSONMap 性能测试 - 优化版
  *
  * 输出格式：表格形式，一次测试一行
  */
+@Disabled("手工性能测试；正式基准应使用 JMH 独立运行")
 public class JSONMapPerformanceTest {
 
     private static final String JSON_DATA = "        {\n" +
@@ -134,13 +136,11 @@ public class JSONMapPerformanceTest {
         // 正式测试
         long startTime = System.nanoTime();
         if(multiThread){
-            new ArrayList<>(iterations).parallelStream().forEach(i -> {
-                checker.apply(response);
-            });
+            IntStream.range(0, iterations).parallel().forEach(i -> checker.apply(response));
         }else{
-            new ArrayList<>(iterations).stream().forEach(i -> {
+            for (int i = 0; i < iterations; i++) {
                 checker.apply(response);
-            });
+            }
         }
         return (System.nanoTime() - startTime) /1000 ;
     }
@@ -157,13 +157,11 @@ public class JSONMapPerformanceTest {
         // 正式测试
         long startTime = System.nanoTime();
         if(multiThread){
-            new ArrayList<>(iterations).parallelStream().forEach(i -> {
-                checker.apply(builder.get());
-            });
+            IntStream.range(0, iterations).parallel().forEach(i -> checker.apply(builder.get()));
         }else{
-            new ArrayList<>(iterations).stream().forEach(i -> {
+            for (int i = 0; i < iterations; i++) {
                 checker.apply(builder.get());
-            });
+            }
         }
         return (System.nanoTime() - startTime) / 1_000;
     }
