@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ExceptionErrors {
-    public static Map<Integer, String> errors = new HashMap<>();
+    public final static Map<Integer, String> errors = new HashMap<>();
 
     static {
         addErrors(9997, "JSP内容异常");

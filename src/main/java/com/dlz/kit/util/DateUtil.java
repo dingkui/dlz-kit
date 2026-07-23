@@ -64,7 +64,7 @@ public class DateUtil {
     public static final DateFormat UTC = DateFormat.of(PATTERN_UTC, TimeZone.getTimeZone("UTC"));
 
     /** 格式化器映射表 */
-    public static Map<String, DateFormat> formatterMap = new HashMap<>();
+    public final static Map<String, DateFormat> formatterMap = new HashMap<>();
     static {
         formatterMap.put(PATTERN_YEAR, YEAR);
         formatterMap.put(PATTERN_MONTH, MONTH);
