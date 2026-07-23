@@ -13,12 +13,12 @@ class TraceUtilTest {
 
     @BeforeEach
     void setUp() {
-        MDC.remove("traceId");
+        MDC.clear();
     }
 
     @AfterEach
     void tearDown() {
-        MDC.remove("traceId");
+        MDC.clear();
     }
 
     @Test
@@ -85,7 +85,7 @@ class TraceUtilTest {
     @Test
     @DisplayName("makeTraceId 已有id时返回现有id")
     void testMakeTraceIdExisting() {
-        MDC.put("traceId", "existing");
+        TraceUtil.setTraceId("existing");
         String traceId = TraceUtil.makeTraceId();
         assertEquals("existing", traceId);
     }

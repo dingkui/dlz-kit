@@ -5,7 +5,7 @@ import org.slf4j.MDC;
 
 @Slf4j
 public class TraceUtil {
-    private final static String KEY_TRACEID = "traceId";
+    private final static String KEY_TRACEID = "trace-id";
     private TraceUtil(){
     }
 
@@ -25,16 +25,7 @@ public class TraceUtil {
         return setTraceId(null);
     }
     public static String setTraceId(String traceId){
-        if(traceId != null){
-            String oldtraceId = MDC.get(KEY_TRACEID);
-            if(oldtraceId != null){
-                if(oldtraceId.equals(traceId)){
-                    log.warn("traceId:{} has set in this same thread!",traceId);
-                    return traceId;
-                }
-                log.error("traceId:{} has set in this thread, but you will set a new traceId:{}!",oldtraceId,traceId);
-            }
-        }else{
+        if(traceId == null){
             traceId = makeTraceId();
         }
         MDC.put(KEY_TRACEID, traceId);

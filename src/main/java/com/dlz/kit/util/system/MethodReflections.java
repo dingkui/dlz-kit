@@ -70,14 +70,14 @@ public class MethodReflections {
      * 只匹配函数名，如果有多个同名函数调用第一个。
      */
     public static Object invokeMethod(final Object obj, final String methodName, final Object... args) {
-        Method method = getAccessibleMethod(obj.getClass(), methodName, com.dlz.kit.util.system.Reflections.mkParameterTypes(args));
+        Method method = getAccessibleMethod(obj.getClass(), methodName, Reflections.mkParameterTypes(args));
         if (method == null) {
             throw new SystemException("Could not find method [" + methodName + "] on target [" + obj + "]");
         }
         try {
             return method.invoke(obj, args);
         } catch (Exception e) {
-            throw com.dlz.kit.util.system.Reflections.convertReflectionExceptionToUnchecked(e);
+            throw Reflections.convertReflectionExceptionToUnchecked(e);
         }
     }
 
@@ -91,7 +91,7 @@ public class MethodReflections {
         try {
             return method.invoke(obj, args);
         } catch (Exception e) {
-            throw com.dlz.kit.util.system.Reflections.convertReflectionExceptionToUnchecked(e);
+            throw Reflections.convertReflectionExceptionToUnchecked(e);
         }
     }
     /**
