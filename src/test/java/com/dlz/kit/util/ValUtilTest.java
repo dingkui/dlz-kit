@@ -8,7 +8,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -176,12 +179,18 @@ class ValUtilTest {
 
             // 默认值测试
             assertEquals("default", ValUtil.toStr(null, "default"));
+            assertEquals("2023-01-01 00:00:00", ValUtil.toStr(DateUtil.DATETIME.parse("2023-01-01 00:00:00")));
+            assertEquals("2023-01-01 00:00:00", ValUtil.toStr(DateUtil.DATETIME.parse2LocalDateTime("2023-01-01 00:00:00")));
+            assertEquals("2023-01-01", ValUtil.toStr(DateUtil.DATE.parse2LocalDate("2023-01-01")));
+            assertEquals("01:02:03", ValUtil.toStr(DateUtil.TIME.parse2LocalTime("01:02:03")));
+            assertEquals("01:02", ValUtil.toStr(DateUtil.TIME.parse2LocalTime("01:02:00")));
             assertEquals("", ValUtil.toStrBlank(null));
             
             // 特殊值处理
             assertEquals("default", ValUtil.toStrWithEmpty(null, "default"));
             assertEquals("default", ValUtil.toStrWithEmpty("null", "default"));
             assertEquals("default", ValUtil.toStrWithEmpty("", "default"));
+            assertEquals("1", ValUtil.toStrWithEmpty("1", "default"));
         }
 
         @Test
@@ -251,6 +260,11 @@ class ValUtilTest {
         @Test
         @DisplayName("数组转换测试")
         void testToArray() {
+            assertNull(ValUtil.toArray(null));
+            assertNull(ValUtil.toArray(null,(Object[])null));
+            assertNull(ValUtil.toArray((Object[])null,(Class)null));
+            assertNull(ValUtil.toArray((Collection )null,(Class)null));
+
             // Collection转数组
             List<String> list = Arrays.asList("元素1", "元素2");
             Object[] array = ValUtil.toArray(list);
@@ -300,6 +314,16 @@ class ValUtilTest {
             assertEquals(Integer.valueOf(1), resultArray[0]);
             assertEquals(Integer.valueOf(2), resultArray[1]);
             assertEquals(Integer.valueOf(3), resultArray[2]);
+
+            final ArrayList<String> input = new ArrayList<>(1);
+            input.add("1");
+            assertEquals(1, ValUtil.toArray(input, Integer.class).length);
+
+            final Object split = commaString.split(",");
+            assertEquals(3, ValUtil.toArray(split, Integer.class).length);
+
+            assertEquals(3, ValUtil.toArray("[1,2,3]", Integer.class).length);
+
         }
     }
 
@@ -337,6 +361,10 @@ class ValUtilTest {
             // 字符串转换
             Date date = ValUtil.toDate("2023-01-01 12:30:45");
             assertNotNull(date);
+
+            Date date2 = ValUtil.toDate("2023-01-01 12:30:45","");
+
+            assertTrue(ValUtil.toDate(DateUtil.DATE.parse2LocalDate("2023-01-01")) instanceof Date);
             
             // LocalDateTime转换
             LocalDateTime localDateTime = LocalDateTime.now();
@@ -350,11 +378,6 @@ class ValUtilTest {
             
             // null处理
             assertNull(ValUtil.toDate(null));
-            
-            // 默认值测试
-            Date now = new Date();
-            Date result = ValUtil.toDateNow(null);
-            assertNotNull(result);
         }
 
         @Test
@@ -476,11 +499,13 @@ class ValUtilTest {
             assertNull(ValUtil.toDate("invalid-date"));
             assertNull(ValUtil.toDate("invalid-date"));
             assertNull(ValUtil.toLocalDateTime("invalid-datetime"));
-            
+
             // 无效JSON
             JSONList list = ValUtil.toList("{invalid json}", new ArrayList<>());
             assertEquals(1,list.size());
             assertEquals(1,ValUtil.toList("{invalid json}").size());
+
+            assertNull(ValUtil.toList(null, String.class));
         }
 
         @Test

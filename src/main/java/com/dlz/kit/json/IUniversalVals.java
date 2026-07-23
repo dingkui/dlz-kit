@@ -260,7 +260,7 @@ public interface IUniversalVals {
      * @return 日期值
      */
     default Date getDate(String key, String format) {
-        return ValUtil.toDate(getKeyVal(key), format);
+        return ValUtil.toDate(ValUtil.toStr(getKeyVal(key)), format);
     }
 
     /**

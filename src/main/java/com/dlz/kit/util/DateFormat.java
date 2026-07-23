@@ -4,7 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.Date;
@@ -74,9 +76,27 @@ public class DateFormat {
         }
         return formatter.format(date);
     }
-    public LocalDateTime parse2LocalDate(String dateStr) {
+    public LocalDateTime parse2LocalDateTime(String dateStr) {
         try {
             return LocalDateTime.parse(dateStr, formatter);
+        } catch (Exception e) {
+            log.warn("parse2LocalDate错误:"+pattern+" "+dateStr);
+//			log.error(ExceptionUtils.getStackTrace(e));
+            return null;
+        }
+    }
+    public LocalDate parse2LocalDate(String dateStr) {
+        try {
+            return LocalDate.parse(dateStr, formatter);
+        } catch (Exception e) {
+            log.warn("parse2LocalDate错误:"+pattern+" "+dateStr);
+//			log.error(ExceptionUtils.getStackTrace(e));
+            return null;
+        }
+    }
+    public LocalTime parse2LocalTime(String dateStr) {
+        try {
+            return LocalTime.parse(dateStr, formatter);
         } catch (Exception e) {
             log.warn("parse2LocalDate错误:"+pattern+" "+dateStr);
 //			log.error(ExceptionUtils.getStackTrace(e));

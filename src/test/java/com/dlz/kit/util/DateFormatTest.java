@@ -71,9 +71,9 @@ class DateFormatTest {
 
     @Test
     @DisplayName("parse2LocalDate 解析LocalDateTime")
-    void testParse2LocalDate() {
+    void testParse2LocalDateTime() {
         DateFormat df = DateFormat.of("yyyy-MM-dd HH:mm:ss");
-        LocalDateTime result = df.parse2LocalDate("2024-01-15 10:30:45");
+        LocalDateTime result = df.parse2LocalDateTime("2024-01-15 10:30:45");
         assertNotNull(result);
         assertEquals(2024, result.getYear());
         assertEquals(1, result.getMonthValue());
@@ -82,9 +82,9 @@ class DateFormatTest {
 
     @Test
     @DisplayName("parse2LocalDate 无效字符串返回null")
-    void testParse2LocalDateInvalid() {
+    void testParse2LocalDateTimeInvalid() {
         DateFormat df = DateFormat.of("yyyy-MM-dd HH:mm:ss");
-        assertNull(df.parse2LocalDate("not-a-datetime"));
+        assertNull(df.parse2LocalDateTime("not-a-datetime"));
     }
 
     @Test

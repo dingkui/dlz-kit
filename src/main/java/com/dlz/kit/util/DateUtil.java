@@ -220,22 +220,6 @@ public class DateUtil {
         }
         return null;
     }
-    
-    /**
-     * 将字符串转换为LocalDateTime
-     *
-     * @param dateStr 时间字符串
-     * @param pattern 日期格式模式
-     * @return 解析后的LocalDateTime，解析失败返回null
-     */
-    private static LocalDateTime parseLocalDateTime(String dateStr, String pattern) {
-        try {
-            return DateUtil.formatter(pattern).parse2LocalDate(dateStr);
-        } catch (Exception e) {
-            log.error(ExceptionUtils.getStackTrace(e));
-        }
-        return null;
-    }
 
     /**
      * 将字符串自动识别并转换为日期
@@ -316,7 +300,7 @@ public class DateUtil {
             return null;
         }
         if (format != null) {
-            return formatter(format).parse2LocalDate(input);
+            return formatter(format).parse2LocalDateTime(input);
         }
         return getLocalDateTime(input);
     }
@@ -347,13 +331,13 @@ public class DateUtil {
         String input2 = input.replaceAll("/", "-").replaceAll("\"", "");
         for (int i = 0; i < date_trans.length; i++) {
             if (date_trans[i].v2.matcher(input2).matches()) {
-                return DateUtil.formatter(date_trans[i].v1).parse2LocalDate(input2);
+                return DateUtil.formatter(date_trans[i].v1).parse2LocalDateTime(input2);
             }
         }
         if (TIME_PATTERN_1.matcher(input2).matches()) {
-            return DateUtil.DATETIME.parse2LocalDate(DateUtil.getDateStr() + " " + input2 + ":00");
+            return DateUtil.DATETIME.parse2LocalDateTime(DateUtil.getDateStr() + " " + input2 + ":00");
         } else if (TIME_PATTERN_2.matcher(input2).matches()) {
-            return DateUtil.DATETIME.parse2LocalDate(DateUtil.getDateStr() + " " + input2);
+            return DateUtil.DATETIME.parse2LocalDateTime(DateUtil.getDateStr() + " " + input2);
         } else if (UTC_PATTERN.matcher(input2).matches()) {
             return parseUTCLocalDateTime(input2);
         }

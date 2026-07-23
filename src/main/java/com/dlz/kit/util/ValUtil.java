@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.function.Function;
@@ -24,6 +25,7 @@ import java.util.function.Function;
  */
 @Slf4j
 public class ValUtil {
+    private ValUtil(){}
     public final static Integer ZERO_INT = 0;
     public final static Long ZERO_LONG = 0l;
     public final static Float ZERO_FLOAT = 0f;
@@ -47,22 +49,21 @@ public class ValUtil {
     }
 
     public static BigDecimal toBigDecimal(Object input, BigDecimal defaultV) {
-        Number o = toNumber(input, null);
-        if (o == null) {
+        if (input == null || "".equals(input)) {
             return defaultV;
         }
-        if (o instanceof BigDecimal) {
-            return (BigDecimal) o;
+        if (input instanceof BigDecimal) {
+            return (BigDecimal) input;
         }
         // Float 和 Double 需要通过 toString 避免精度问题
-        if (o instanceof Float || o instanceof Double) {
-            return new BigDecimal(o.toString());
+        if (input instanceof Float || input instanceof Double) {
+            return new BigDecimal(input.toString());
         }
         // Integer 和 Long 可以直接转换
-        if (o instanceof Integer || o instanceof Long) {
-            return new BigDecimal(o.longValue());
+        if (input instanceof Integer || input instanceof Long) {
+            return new BigDecimal(((Number)input).longValue());
         }
-        return new BigDecimal(o.toString());
+        return new BigDecimal(input.toString());
     }
 
     public static BigDecimal toBigDecimalZero(Object input) {
@@ -212,12 +213,7 @@ public class ValUtil {
         if (input instanceof JSONList) {
             return (JSONList) input;
         }
-        try {
-            return new JSONList(input);
-        } catch (RuntimeException e) {
-            log.error(ExceptionUtils.getStackTrace(e));
-        }
-        return new JSONList(defaultV);
+        return new JSONList(input);
     }
 
     public static <T> List<T> toList(Object input, Class<T> clazz) {
@@ -246,12 +242,7 @@ public class ValUtil {
         } else if (input instanceof Collection) {
             return ((Collection) input).toArray();
         }
-        try {
-            return new JSONList(input).toArray();
-        } catch (RuntimeException e) {
-            log.warn(e.getMessage());
-        }
-        return defaultV;
+        return new JSONList(input).toArray();
     }
 
     public static <T> T[] toArray(Collection input, Class<T> clazz) {
@@ -325,14 +316,14 @@ public class ValUtil {
     }
 
     public static Date toDate(Object input) {
-        return toDate(input, null, null);
+        return toDate(input, (Date)null);
     }
 
-    public static Date toDate(Object input, String format) {
-        return toDate(input, format, null);
+    public static Date toDate(String input, String format) {
+        return DateUtil.getDate(input, format);
     }
 
-    public static Date toDate(Object input, String format, Date defaultV) {
+    public static Date toDate(Object input, Date defaultV) {
         if (input == null) {
             return defaultV;
         }
@@ -348,34 +339,23 @@ public class ValUtil {
         if (input instanceof LocalDate) {
             return DateUtil.getDate((LocalDate) input);
         }
-        return DateUtil.getDate(toStr(input), format);
-    }
-
-    public static Date toDateNow(Object input) {
-        return toDate(input, null, new Date());
+        return DateUtil.getDate(toStr(input));
     }
 
     public static String toDateStr(Object input) {
-        return toDateStr(input, null, null);
-    }
-
-    public static String toDateStr(Object input, String format) {
-        return toDateStr(input, format, null);
-    }
-
-    public static String toDateStr(Object input, String format, Date defaultV) {
-        Date date = toDate(input, null, defaultV);
+        Date date = toDate(input);
         if (date == null) {
             return "";
         }
-        if (format == null) {
-            return DateUtil.DATETIME.format(date);
-        }
-        return DateUtil.format(date, format);
+        return DateUtil.DATETIME.format(date);
     }
 
-    public static String toDateStrNow(Object input) {
-        return toDateStr(input, null, new Date());
+    public static String toDateStr(Object input, String format) {
+        Date date = toDate(input);
+        if (date == null) {
+            return "";
+        }
+        return DateUtil.format(date, format);
     }
 
     private static Map<Class<?>, Function<?, ?>> natveConverts = new HashMap<>();
@@ -452,12 +432,4 @@ public class ValUtil {
     public static boolean isEmpty(Object cs) {
         return StringUtils.isEmpty(cs);
     }
-
-
-//    public static void main(String[] args) {
-//        System.out.println(toDate("2018-21-24 19:23:39.583"));
-//        System.out.println(toDate("2018-1-24 19:23"));
-//        System.out.println(toDate("19:23"));
-//        System.out.println(toDate("2018-1-24"));
-//    }
 }
